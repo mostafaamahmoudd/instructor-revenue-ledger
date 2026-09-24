@@ -10,14 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('payout_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('type', 20);
-            $table->timestamps();
+            $table->foreignId('payout_id')->constrained('payouts');
+            $table->foreignId('earning_schedule_id')->unique()->constrained('earning_schedules');
+            $table->bigInteger('amount_minor');
 
-            $table->index('type');
+            $table->index('payout_id');
         });
     }
 
@@ -26,6 +25,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('payout_items');
     }
 };

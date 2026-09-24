@@ -10,14 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('payout_batches', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('type', 20);
-            $table->timestamps();
+            $table->string('period_key', 20);
+            $table->timestamp('triggered_at');
+            $table->string('status', 20)->default('running');
+            $table->timestamp('created_at')->useCurrent();
 
-            $table->index('type');
+            $table->index('period_key');
         });
     }
 
@@ -26,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('payout_batches');
     }
 };

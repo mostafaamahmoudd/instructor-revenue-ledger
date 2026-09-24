@@ -10,14 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('type', 20);
+        Schema::create('mock_provider_ledger', function (Blueprint $table) {
+            $table->string('idempotency_key', 191)->primary();
+            $table->string('outcome', 20);
+            $table->string('provider_reference')->nullable();
             $table->timestamps();
-
-            $table->index('type');
         });
     }
 
@@ -26,6 +23,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('mock_provider_ledger');
     }
 };
