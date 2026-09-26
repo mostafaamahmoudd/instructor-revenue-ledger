@@ -2,20 +2,18 @@
 
 namespace Database\Factories;
 
-use App\Enums\UserType;
-use App\Models\User;
+use App\Models\Instructor;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class UserFactory extends Factory
+class InstructorFactory extends Factory
 {
-    protected $model = User::class;
+    protected $model = Instructor::class;
 
     public function definition(): array
     {
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'type' => fake()->randomElement(UserType::cases()),
         ];
     }
 }
