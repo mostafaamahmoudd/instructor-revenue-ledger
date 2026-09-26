@@ -17,7 +17,11 @@ class InstructorBalanceSnapshotFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'instructor_id' => \App\Models\Instructor::factory(),
+            'currency' => 'USD',
+            'earned_total_minor' => 0,
+            'paid_total_minor' => 0,
+            'computed_at' => now(),
         ];
     }
 }

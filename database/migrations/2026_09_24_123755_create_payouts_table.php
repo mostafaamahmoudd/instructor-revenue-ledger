@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('payout_batch_id')->constrained('payout_batches');
             $table->unsignedBigInteger('instructor_id');
-            $table->enum('instructor_type', ['instructor'])->default('instructor');
+            $table->string('instructor_type', 20)->default('instructor');
             $table->string('period_key', 20);
             $table->bigInteger('amount_minor');
             $table->char('currency', 3);
@@ -28,6 +28,8 @@ return new class extends Migration {
 
             $table->unique(['instructor_id', 'period_key', 'currency'], 'idx_payout_idempotency');
             $table->index(['status', 'last_checked_at'], 'idx_payout_status_check');
+            $table->foreign(['instructor_id', 'instructor_type'], 'fk_payouts_instructor')
+                ->references(['id', 'type'])->on('users');
         });
     }
 

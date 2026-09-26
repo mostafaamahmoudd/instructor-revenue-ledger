@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index('type');
+            $table->unique(['id', 'type'], 'uq_users_id_type');
         });
     }
 

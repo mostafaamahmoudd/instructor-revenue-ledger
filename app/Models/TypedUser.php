@@ -6,6 +6,8 @@ use App\Enums\UserType;
 
 abstract class TypedUser extends User
 {
+    protected $table = 'users';
+
     protected static function booted(): void
     {
         static::addGlobalScope('type', function ($query) {

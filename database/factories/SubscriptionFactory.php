@@ -35,8 +35,8 @@ class SubscriptionFactory extends Factory
                 'annual' => 29900
             },
             'currency' => 'USD',
-            'starts_at' => $start,
-            'ends_at' => (clone $start)->modify("+{$months} months"),
+            'start_date' => $start->format('Y-m-d'),
+            'end_date' => (clone $start)->modify("+{$months} months")->format('Y-m-d'),
             'status' => 'active',
         ];
     }

@@ -17,7 +17,9 @@ class StudentCourseAccessFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'student_id' => \App\Models\Student::factory(),
+            'course_id' => \App\Models\Course::factory(),
+            'created_at' => now(),
         ];
     }
 }

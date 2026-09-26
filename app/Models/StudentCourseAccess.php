@@ -13,6 +13,8 @@ class StudentCourseAccess extends Model
     use HasFactory;
     use StudentCourseAccessRelations;
 
+    protected $table = 'student_course_access';
+
     public $timestamps = false;
 
     /**
