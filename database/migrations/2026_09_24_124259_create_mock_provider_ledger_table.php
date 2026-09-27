@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('idempotency_key', 191)->primary();
             $table->string('outcome', 20);
             $table->string('provider_reference')->nullable();
+            $table->unsignedInteger('attempts')->default(0);
             $table->timestamps();
         });
     }
