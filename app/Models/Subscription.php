@@ -27,8 +27,8 @@ class Subscription extends Model
         'plan',
         'amount_minor',
         'currency',
-        'starts_at',
-        'ends_at',
+        'start_date',
+        'end_date',
         'status',
         'refunded_at',
     ];
@@ -36,8 +36,8 @@ class Subscription extends Model
     protected function casts(): array
     {
         return [
-            'starts_at' => 'date',
-            'ends_at' => 'date',
+            'start_date' => 'date',
+            'end_date' => 'date',
             'refunded_at' => 'datetime',
         ];
     }

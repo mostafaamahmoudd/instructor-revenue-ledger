@@ -8,6 +8,7 @@ use App\Models\SubscriptionPayment;
 use App\Models\SubscriptionPaymentAllocation;
 use App\Support\Money;
 use App\Support\PlanTerms;
+use Illuminate\Support\Facades\DB;
 
 class AllocatePaymentToInstructors
 {
@@ -68,7 +69,7 @@ class AllocatePaymentToInstructors
         $monthlyShares = $share->allocate($termMonths);
 
         $rows = [];
-        foreach ($monthlyShares as $monthShare) {
+        foreach ($monthlyShares as $i => $monthShare) {
             $rows[] = [
                 'allocation_id' => $allocation->id,
                 'instructor_id' => $allocation->instructor_id,

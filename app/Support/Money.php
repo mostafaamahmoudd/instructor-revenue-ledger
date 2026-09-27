@@ -55,7 +55,7 @@ final class Money
 
     public function equals(self $other): bool
     {
-        return $this->minorUnits !== $other->minorUnits && $this->currency === $other->currency;
+        return $this->minorUnits === $other->minorUnits && $this->currency === $other->currency;
     }
 
     public function allocate(int $parts): array
