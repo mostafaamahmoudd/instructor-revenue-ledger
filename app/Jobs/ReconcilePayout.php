@@ -24,23 +24,29 @@ class ReconcilePayout implements ShouldQueue
 
     public function handle(MockPaymentProvider $provider): void
     {
-        $payout = Payout::query()->whereKey($this->payoutId)->lockForUpdate()->first();
-
-        if (!$payout || $payout->status !== Payout::STATUS_UNCERTAIN) {
-            return;
-        }
-
-        $payout->increment('attempts');
-
-        DB::commit();
-
-        $result = $provider->checkStatus($payout->provider_idempotency_key);
-
-        DB::transaction(function () use ($result) {
+        $key = DB::transaction(function () {
             $payout = Payout::query()->whereKey($this->payoutId)->lockForUpdate()->first();
 
             if (!$payout || $payout->status !== Payout::STATUS_UNCERTAIN) {
-                return;
+                return null;
+            }
+
+            $payout->increment('attempts');
+
+            return $payout->provider_idempotency_key;
+        });
+
+        if (!$key) {
+            return;
+        }
+
+        $result = $provider->checkStatus($key);
+
+        $final = DB::transaction(function () use ($result) {
+            $payout = Payout::query()->whereKey($this->payoutId)->lockForUpdate()->first();
+
+            if (!$payout || $payout->status !== Payout::STATUS_UNCERTAIN) {
+                return $payout;
             }
 
             match ($result['outcome']) {
@@ -53,23 +59,22 @@ class ReconcilePayout implements ShouldQueue
                     'status' => Payout::STATUS_FAILED,
                     'last_checked_at' => now(),
                 ]),
-
                 default => $payout->update(['last_checked_at' => now()]),
             };
+
+            return $payout->fresh();
         });
 
-        $payout->refresh();
-
-        if ($payout->status === Payout::STATUS_UNCERTAIN) {
-            $nextAttemptIndex = min($payout->attempts, count(self::BACKOFF_MINUTES) - 1);
-
-            if ($payout->attempts >= self::MAX_ATTEMPTS_BEFORE_MANUAL_REVIEW) {
-                $payout->update(['requires_manual_review' => true]);
-                return;
-            }
-
-            self::dispatch($this->payoutId)
-                ->delay(now()->addMinutes(self::BACKOFF_MINUTES[$nextAttemptIndex]));
+        if (!$final || $final->status !== Payout::STATUS_UNCERTAIN) {
+            return;
         }
+
+        if ($final->attempts >= self::MAX_ATTEMPTS_BEFORE_MANUAL_REVIEW) {
+            $final->update(['requires_manual_review' => true]);
+            return;
+        }
+
+        $idx = min(max($final->attempts - 1, 0), count(self::BACKOFF_MINUTES) - 1);
+        self::dispatch($this->payoutId)->delay(now()->addMinutes(self::BACKOFF_MINUTES[$idx]));
     }
 }
