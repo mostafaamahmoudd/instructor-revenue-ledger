@@ -22,18 +22,20 @@ class ExecutePayout implements ShouldQueue
     public function handle(MockPaymentProvider $provider): void
     {
         $claimed = DB::transaction(function () {
-            $payout = Payout::query()->whereKey($this->payoutId)->first();
+            $updated = Payout::query()
+                ->whereKey($this->payoutId)
+                ->whereIn('status', [Payout::STATUS_PENDING, Payout::STATUS_FAILED])
+                ->update([
+                    'status' => Payout::STATUS_PROCESSING,
+                    'attempts' => DB::raw('attempts + 1'),
+                    'updated_at' => now(),
+                ]);
 
-            if (!$payout || !in_array($payout->status, [Payout::STATUS_PENDING, Payout::STATUS_FAILED], true)) {
+            if ($updated !== 1) {
                 return null;
             }
 
-            $payout->update([
-                'status' => Payout::STATUS_PROCESSING,
-                'attempts' => ++$payout->attempts,
-            ]);
-
-            return $payout;
+            return Payout::query()->whereKey($this->payoutId)->first();
         });
 
         if (!$claimed) {

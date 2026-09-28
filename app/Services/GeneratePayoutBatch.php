@@ -5,8 +5,9 @@ namespace App\Services;
 use App\Models\EarningSchedule;
 use App\Models\Payout;
 use App\Models\PayoutBatch;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class GeneratePayoutBatch
 {
@@ -66,13 +67,18 @@ class GeneratePayoutBatch
                     'provider_idempotency_key' => (string)Str::uuid(),
                     'attempts' => 0,
                 ]);
-            } catch (QueryException $e) {
-                DB::rollBack();
-                if ($e->getCode() !== 23000) {
-                    throw $e;
+            } catch (UniqueConstraintViolationException $e) {
+                $alreadyCreated = Payout::query()
+                    ->where('instructor_id', $instructorId)
+                    ->where('period_key', $periodKey)
+                    ->where('currency', $currency)
+                    ->exists();
+
+                if ($alreadyCreated) {
+                    return;
                 }
 
-                return;
+                throw $e;
             }
 
             $items = $candidates->map(fn($earning) => [

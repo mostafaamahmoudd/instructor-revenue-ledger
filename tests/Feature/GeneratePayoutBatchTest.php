@@ -1,11 +1,14 @@
 <?php
 
+use App\Jobs\ExecutePayout;
 use App\Models\EarningSchedule;
 use App\Models\Instructor;
 use App\Models\Payout;
+use App\Services\MockPaymentProvider;
 use App\Services\GeneratePayoutBatch;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Tests\TestCase;
 
 class GeneratePayoutBatchTest extends TestCase
@@ -34,6 +37,30 @@ class GeneratePayoutBatchTest extends TestCase
         (new GeneratePayoutBatch)->run('2026-09');
 
         $this->assertSame(1, Payout::where('instructor_id', $instructor->id)->count());
+    }
+
+    public function test_running_generation_twice_only_produces_one_provider_payment_attempt(): void
+    {
+        $provider = new MockPaymentProvider(successRate: 1.0, permanentFailureRate: 0);
+        $this->app->instance(MockPaymentProvider::class, $provider);
+
+        $instructor = Instructor::factory()->create();
+        EarningSchedule::factory()->recognized()->create(['instructor_id' => $instructor->id, 'currency' => 'USD', 'amount_minor' => 500]);
+
+        (new GeneratePayoutBatch)->run('2026-09');
+        (new GeneratePayoutBatch)->run('2026-09');
+
+        $payouts = Payout::where('instructor_id', $instructor->id)
+            ->where('period_key', '2026-09')
+            ->where('currency', 'USD')
+            ->get();
+
+        foreach ($payouts as $payout) {
+            Bus::dispatchSync(new ExecutePayout($payout->id));
+        }
+
+        $this->assertCount(1, $payouts);
+        $this->assertSame(1, $provider->attemptsFor($payouts->first()->provider_idempotency_key));
     }
 
     public function test_the_database_constraint_itself_rejects_a_duplicate_payout(): void

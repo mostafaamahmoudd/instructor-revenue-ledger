@@ -5,12 +5,12 @@ namespace Tests\Feature;
 use App\Models\EarningSchedule;
 use App\Models\SubscriptionPaymentAllocation;
 use App\Services\RecognizeEarnings;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class RecognizeEarningsTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_only_due_unrecognized_unvoided_rows_get_recognized(): void
     {
@@ -74,6 +74,23 @@ class RecognizeEarningsTest extends TestCase
 
         $this->assertSame(0, app(RecognizeEarnings::class)->run(now()));
         $this->assertNull($voided->fresh()->recognized_at);
+    }
+
+    public function test_earnings_recognize_command_recognizes_due_rows(): void
+    {
+        $this->markExistingSchedulesRecognized();
+
+        $due = $this->createSchedule([
+            'earn_date' => now()->subDay()->toDateString(),
+            'recognized_at' => null,
+            'voided_at' => null,
+        ]);
+
+        $this->artisan('earnings:recognize')
+            ->assertSuccessful()
+            ->expectsOutput('Recognized 1 earning schedule row(s).');
+
+        $this->assertNotNull($due->fresh()->recognized_at);
     }
 
     private function createSchedule(array $attributes): EarningSchedule

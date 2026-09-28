@@ -10,12 +10,12 @@ use App\Models\Subscription;
 use App\Models\SubscriptionEnrollment;
 use App\Models\SubscriptionPayment;
 use App\Services\AllocatePaymentToInstructors;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AllocatePaymentToInstructorsTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     public function test_allocation_totals_plus_platform_cut_equal_payment_amount(): void
     {
